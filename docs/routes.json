@@ -1,0 +1,39 @@
+{
+    "routes": [
+        {
+            "route": "/.auth/login/github",
+            "statusCode": "401"
+        },
+        {
+            "route": "/.auth/login/twitter",
+            "statusCode": "401"
+        },
+        {
+            "route": "/.auth/login/facebook",
+            "statusCode": "401"
+        },
+        {
+            "route": "/.auth/login/google",
+            "statusCode": "401"
+        },
+        {
+            "route": "/login",
+            "serve": "/.auth/login/aad"
+        },
+        {
+            "route": "/logout",
+            "serve": "/.auth/logout"
+        },
+        {
+            "route": "/*",
+            "allowedRoles": ["reader", "contributer"]
+        }
+    ],
+    "platformErrorOverrides": [
+        {
+            "errorType": "Unauthenticated",
+            "statusCode": "302",
+            "serve": "/login"
+        }
+    ]
+}
