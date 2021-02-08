@@ -115,7 +115,7 @@ class AzureML:
         self.get_workspace()
         self.environment = Environment(self.environment_name)
         self.environment = self._set_environment_properties(self.environment)
-        build = self.environment.build()
+        build = self.environment.build(self.ws)
         self.environment.register(self.ws)
         return build
 
