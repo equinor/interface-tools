@@ -31,13 +31,6 @@ class AzureML:
         - (REQUIRED) Docker client needs to be installed on your local machine
         - (REQUIRED) On Windows, the folder "C:\\Users\\USERNAME\\AppData\\Local\\Temp\\azureml_runs" needs to
                      be included as a resource under *File sharing* in the Docker client
-
-    Loading data, Atlas and the VPN
-    ----------------------------------
-    Currently this setup does not support running while connected to the VPN. This is a problem when
-    connecting to Atlas to retrieve data, since Atlas does not allow connections from IPs other than
-    the Equinor VPN. To solve this, either run in a cluster in Azure ML, rather than locally or
-    convince Bjørnar Elgsæther to whitelist your IP.
     """
 
     def __init__(
@@ -86,6 +79,7 @@ class AzureML:
         self.enable_docker = enable_docker
         self.run: Optional[Run] = None
         self.model = None
+        self.ws = None
 
     def get_workspace(self) -> Workspace:
         """Get the workspace from Azure ML
@@ -93,23 +87,37 @@ class AzureML:
         :return: Azure ML workspace handle
         :rtype: Workspace
         """
+        if self.ws:
+            return self.ws
         self.ws = Workspace.from_config()
         return self.ws
 
-    def build_environment(self) -> Environment:
-        """Build the Azure ML environment
+    def get_environment(self) -> Environment:
+        """Gets the environment in Azure ML and merges local config file
 
         :return: Azure ML environment handle
         :rtype: Environment
         """
-        self.environment = Environment(self.environment_name)
-        self.environment.python.user_managed_dependencies = True
-        self.environment.docker.enabled = self.enable_docker
-        self.environment.docker.base_image = self.docker_base_image
-        self.environment.environment_variables = self.environment_variables
-        self.environment.inferencing_stack_version = "latest"
-        self.environment.build(self.ws)
+        self.get_workspace()
+        if self.environment_name in Environment.list(self.ws).keys():
+            self.environment = Environment.get(self.ws, self.environment_name)
+        else:
+            self.environment = Environment(self.environment_name)
+        self.environment = self._set_environment_properties(self.environment)
         return self.environment
+
+    def register_environment(self) -> Any:
+        """Builds and registers a new environment in Azure ML according to local config file
+
+        :return: Environment build information
+        :rtype: Any
+        """
+        self.get_workspace()
+        self.environment = Environment(self.environment_name)
+        self.environment = self._set_environment_properties(self.environment)
+        build = self.environment.build()
+        self.environment.register(self.ws)
+        return build
 
     def deploy(
         self,
@@ -212,7 +220,7 @@ class AzureML:
         :rtype: Run
         """
         self.get_workspace()
-        self.build_environment()
+        self.get_environment()
         self.build_experiment()
 
         compute_target: Union[str, ComputeTarget] = "local"
@@ -244,3 +252,11 @@ class AzureML:
 
         logger.info("Experiment completed successfully.")
         return self.run
+
+    def _set_environment_properties(self, environment: Environment) -> Environment:
+        environment.python.user_managed_dependencies = True
+        environment.docker.enabled = self.enable_docker
+        environment.docker.base_image = self.docker_base_image
+        environment.environment_variables = self.environment_variables
+        environment.inferencing_stack_version = "latest"
+        return environment

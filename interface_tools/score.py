@@ -1,7 +1,8 @@
 import logging
 import os
+from logging import Logger
 from pathlib import Path
-from typing import Any
+from typing import Any, Union
 
 import joblib
 from opencensus.ext.azure.log_exporter import AzureLogHandler
@@ -16,9 +17,7 @@ AML_ENV: str = "AZUREML_MODEL_DIR"
 APPINSIGHTS_ENV: str = "ENABLE_APPINSIGHTS"
 
 
-def _setup_logging(enableAppInsights: bool):
-    global logger
-
+def _setup_logging(enableAppInsights: Union[str, bool]) -> Logger:
     FORMAT = "%(asctime)-15s %(levelname)s %(module)s:%(message)s"
     logging.basicConfig(
         level=logging.INFO,
@@ -43,6 +42,7 @@ def _setup_logging(enableAppInsights: bool):
                 connection_string=f"InstrumentationKey={instrumentation_key}"
             )
         )
+    return logger
 
 
 def init() -> None:
@@ -54,7 +54,7 @@ def init() -> None:
     global artifacts
 
     enableAppInsights = os.getenv(APPINSIGHTS_ENV) or False
-    _setup_logging(enableAppInsights)
+    logger = _setup_logging(enableAppInsights)
 
     env = os.getenv(AML_ENV)
     if env:
