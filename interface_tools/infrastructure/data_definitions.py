@@ -16,3 +16,4 @@ class FileType(str, Enum):
     PNG = "png"
     JSON = "json"
     MATPLOTLIB_PNG = "matplotlib_png"
+    TENSORFLOW = "tensorflow"

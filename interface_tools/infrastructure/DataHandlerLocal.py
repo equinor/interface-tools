@@ -8,6 +8,7 @@ from typing import Any, Dict, Generic, TypeVar
 import joblib
 import numpy as np
 import pandas as pd
+import tensorflow as tf
 
 from interface_tools.infrastructure.data_definitions import FileType
 
@@ -43,6 +44,8 @@ class DataHandlerLocal(Generic[T]):
             self._save_png(content, config["name"], path)
         elif config["file_type"] == FileType.MATPLOTLIB_PNG:
             self._save_matplotlib_png(content, config["name"], path)
+        elif config["file_type"] == FileType.TENSORFLOW:
+            self._save_tensorflow(content, config["name"], path)
         else:
             raise ValueError(f'File type of value {config["file_type"]} not supported')
 
@@ -61,6 +64,8 @@ class DataHandlerLocal(Generic[T]):
             return self._load_pickle(config["name"], path)
         elif config["file_type"] == FileType.JSON:
             return self._load_json(config["name"], path)
+        elif config["file_type"] == FileType.TENSORFLOW:
+            return self._load_tensorflow(config["name"], path)
         else:
             raise ValueError(f'File type of value {config["file_type"]} not supported')
 
@@ -166,3 +171,14 @@ class DataHandlerLocal(Generic[T]):
         """
         outfile = str(Path(working_dir) / f"{identifier}.png")
         data.savefig(outfile)
+
+    def _save_tensorflow(self, data: Any, identifier: str, working_dir: str) -> None:
+        outfile = str(Path(working_dir) / f"{identifier}")
+        data.save(outfile)
+        logger.info(f"Saved via tensorflow to f{outfile}")
+
+    def _load_tensorflow(self, identifier: str, working_dir: str) -> Any:
+        infile = str(Path(working_dir) / f"{identifier}")
+        data = tf.keras.models.load_model(infile)
+        logger.info(f"Loaded via tensorflow from f{infile}")
+        return data
