@@ -46,6 +46,8 @@ class DataHandlerLocal(Generic[T]):
             self._save_matplotlib_png(content, config["name"], path)
         elif config["file_type"] == FileType.TENSORFLOW:
             self._save_tensorflow(content, config["name"], path)
+        elif config["file_type"] == FileType.PARQUET:
+            self._save_parquet(content, config["name"], path)
         else:
             raise ValueError(f'File type of value {config["file_type"]} not supported')
 
@@ -66,6 +68,8 @@ class DataHandlerLocal(Generic[T]):
             return self._load_json(config["name"], path)
         elif config["file_type"] == FileType.TENSORFLOW:
             return self._load_tensorflow(config["name"], path)
+        elif config["file_type"] == FileType.PARQUET:
+            self._load_parquet(config["name"], path)
         else:
             raise ValueError(f'File type of value {config["file_type"]} not supported')
 
@@ -181,4 +185,15 @@ class DataHandlerLocal(Generic[T]):
         infile = str(Path(working_dir) / f"{identifier}")
         data = tf.keras.models.load_model(infile)
         logger.info(f"Loaded via tensorflow from f{infile}")
+        return data
+
+    def _save_parquet(self, df: pd.DataFrame, identifier: str, working_dir: str) -> None:
+        outfile = str(Path(working_dir) / f"{identifier}.parquet")
+        df.to_parquet(outfile)
+        logger.info(f"Saved {len(df)} rows DataFrame to {outfile}")
+
+    def _load_parquet(self, identifier: str, working_dir: str) -> pd.DataFrame:
+        infile = Path(working_dir) / f"{identifier}.parquet"
+        data = pd.read_parquet(infile)
+        logger.info(f"Loaded {len(data)} rows of raw data from {infile}")
         return data
