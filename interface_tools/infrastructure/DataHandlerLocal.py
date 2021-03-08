@@ -69,7 +69,7 @@ class DataHandlerLocal(Generic[T]):
         elif config["file_type"] == FileType.TENSORFLOW:
             return self._load_tensorflow(config["name"], path)
         elif config["file_type"] == FileType.PARQUET:
-            self._load_parquet(config["name"], path)
+            return self._load_parquet(config["name"], path)
         else:
             raise ValueError(f'File type of value {config["file_type"]} not supported')
 
