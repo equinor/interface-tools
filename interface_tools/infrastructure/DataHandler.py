@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Generic, TypeVar
+from typing import Callable, Dict, Generic, Optional, TypeVar
 
 from interface_tools.infrastructure.DataHandlerAzureML import DataHandlerAzureML
 from interface_tools.infrastructure.DataHandlerLocal import DataHandlerLocal
@@ -14,11 +14,13 @@ class DataHandler(Generic[T]):
         self.dhl = DataHandlerLocal[T]()
         self.dhaml = DataHandlerAzureML[T]()
 
-    def save(self, content: T, config: Dict, base_path: Path = None) -> None:
+    def save(
+        self, config: Dict, base_path: Path, save_lambda: Callable[[Path], None]
+    ) -> None:
         if config["storage_type"] == StorageType.LOCAL:
-            self.dhl.save(content, config, base_path)
+            self.dhl.save(config, base_path, save_lambda)
         elif config["storage_type"] == StorageType.AZ_ML_DS:
-            self.dhaml.save(content, config)
+            raise NotImplementedError("Saving files to Azure ML is not supported")
         elif config["storage_type"] == StorageType.AZ_ST_ACC:
             raise NotImplementedError(
                 "Azure file share storage is not currently implemented (see AB#39504)"
@@ -28,9 +30,18 @@ class DataHandler(Generic[T]):
                 f'Storage type of value {config["storage_type"]} not supported'
             )
 
-    def load(self, config: Dict, base_path: Path = None) -> T:
+    def load(
+        self,
+        config: Dict,
+        base_path: Optional[Path] = None,
+        load_lambda: Optional[Callable[[Path], T]] = None,
+    ) -> T:
         if config["storage_type"] == StorageType.LOCAL:
-            return self.dhl.load(config, base_path)
+            if base_path is None or load_lambda is None:
+                raise ValueError(
+                    "Base path or load lambda cannot be None when loading local files"
+                )
+            return self.dhl.load(config, base_path, load_lambda)
         elif config["storage_type"] == StorageType.AZ_ML_DS:
             return self.dhaml.load(config)
         elif config["storage_type"] == StorageType.AZ_ST_ACC:
