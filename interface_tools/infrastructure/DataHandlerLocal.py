@@ -187,7 +187,9 @@ class DataHandlerLocal(Generic[T]):
         logger.info(f"Loaded via tensorflow from f{infile}")
         return data
 
-    def _save_parquet(self, df: pd.DataFrame, identifier: str, working_dir: str) -> None:
+    def _save_parquet(
+        self, df: pd.DataFrame, identifier: str, working_dir: str
+    ) -> None:
         outfile = str(Path(working_dir) / f"{identifier}.parquet")
         df.to_parquet(outfile)
         logger.info(f"Saved {len(df)} rows DataFrame to {outfile}")
