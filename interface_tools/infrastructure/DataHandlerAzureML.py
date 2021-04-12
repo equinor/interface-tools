@@ -25,7 +25,7 @@ class DataHandlerAzureML(Generic[T]):
 
     def load(self, config: Dict) -> T:
         self._get_workspace()
-        if config["file_type"] == "dataframe":
+        if config["file_type"] == "dataframe" or config["file_type"] == "parquet":
             return self._load_dataframe(config["name"])
         else:
             raise ValueError(f'File type of value {config["file_type"]} not supported')
