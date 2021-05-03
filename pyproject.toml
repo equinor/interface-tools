@@ -9,7 +9,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.7,<3.9"
+python = "^3.6,<3.9"
 joblib = "^0.16.0"
 azure-storage-file-share = "^12.1.2"
 azureml-sdk = "^1.17.0"
